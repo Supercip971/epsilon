@@ -13,6 +13,7 @@ public:
   void drawRect(KDContext * ctx, KDRect rect) const override;
   void setTitle(I18n::Message title);
   bool setChargeState(Ion::Battery::Charge chargeState);
+  bool setChargePercentage(float chargePercentage) { return m_batteryView.setPercentage(chargePercentage); }
   bool setIsCharging(bool isCharging);
   bool setIsPlugged(bool isPlugged);
   bool setShiftAlphaLockStatus(Ion::Events::ShiftAlphaStatus status);

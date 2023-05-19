@@ -1,3 +1,5 @@
+
+#include <poincare/print.h>
 #include "battery_view.h"
 #include <escher/palette.h>
 
@@ -79,8 +81,8 @@ bool BatteryView::setIsPlugged(bool isPlugged) {
 }
 
 void BatteryView::drawInsideBatteryLevel(KDContext * ctx, KDCoordinate width, KDColor color) const {
-  ctx->fillRect(KDRect(k_batteryInsideX, 0, width, k_batteryHeight), color);
-  ctx->fillRect(KDRect(k_batteryInsideX + width, 0, k_batteryInsideWidth - width, k_batteryHeight), Palette::YellowLight);
+  ctx->fillRect(KDRect(k_batteryInsideX, 0, width, icon_rect.height()).translatedBy(icon_rect.topLeft()), color);
+  ctx->fillRect(KDRect(k_batteryInsideX + width, 0, k_batteryInsideWidth - width, icon_rect.height()).translatedBy(icon_rect.topLeft()), Palette::YellowLight);
 }
 
 void BatteryView::drawRect(KDContext * ctx, KDRect rect) const {
@@ -88,14 +90,23 @@ void BatteryView::drawRect(KDContext * ctx, KDRect rect) const {
   /* We draw from left to right. The middle part representing the battery
    *'content' depends on the charge */
 
+  constexpr size_t text_size = 5;
+  char text[text_size];
+
   // Draw the left part
-  ctx->fillRect(KDRect(0, 0, k_elementWidth, k_batteryHeight), KDColorWhite);
+  ctx->fillRect(KDRect(0, 0, k_elementWidth, icon_rect.height()).translatedBy(icon_rect.topLeft()), KDColorWhite);
+  Poincare::Print::CustomPrintf(text, text_size, "%i%%", (int)(m_percentage*100));
+
+
+  ctx->drawString(text, percentage_rect.topLeft(), KDFont::Size::Small, KDColorWhite, Palette::YellowDark);
+
+
 
   // Draw the middle part
   if (m_isCharging) {
     // Charging: Yellow background with flash
-    ctx->fillRect(KDRect(k_batteryInsideX, 0, k_batteryInsideWidth, k_batteryHeight), Palette::YellowLight);
-    KDRect frame((k_batteryWidth - k_flashWidth) / 2, 0, k_flashWidth, k_flashHeight);
+    ctx->fillRect(KDRect(k_batteryInsideX , 0, k_batteryInsideWidth, icon_rect.height()).translatedBy(icon_rect.topLeft()), Palette::YellowLight);
+    KDRect frame((icon_rect.width() - k_flashWidth) / 2, 0, k_flashWidth, k_flashHeight);
     KDColor flashWorkingBuffer[k_flashHeight * k_flashWidth];
     ctx->blendRectWithMask(frame, KDColorWhite, (const uint8_t *)flashMask, flashWorkingBuffer);
   } else if (m_chargeState == Ion::Battery::Charge::LOW) {
@@ -116,17 +127,17 @@ void BatteryView::drawRect(KDContext * ctx, KDRect rect) const {
     drawInsideBatteryLevel(ctx, k_batteryInsideWidth);
     if (m_isPlugged) {
       // FULL and plugged: Full battery with tick
-      KDRect frame((k_batteryWidth - k_tickWidth) / 2, (k_batteryHeight - k_tickHeight) / 2, k_tickWidth, k_tickHeight);
+      KDRect frame((icon_rect.width() - k_tickWidth) / 2, (icon_rect.height() - k_tickHeight) / 2, k_tickWidth, k_tickHeight);
       KDColor tickWorkingBuffer[k_tickHeight * k_tickWidth];
-      ctx->blendRectWithMask(frame, Palette::YellowDark, (const uint8_t *)tickMask, tickWorkingBuffer);
+      ctx->blendRectWithMask(frame.translatedBy(icon_rect.topLeft()), Palette::YellowDark, (const uint8_t *)tickMask, tickWorkingBuffer);
     }
   }
 
   // Draw the right part
-  ctx->fillRect(KDRect(k_batteryWidth - 2 * k_elementWidth, 0, k_elementWidth, k_batteryHeight), KDColorWhite);
-  ctx->fillRect(KDRect(k_batteryWidth - k_elementWidth, (k_batteryHeight - k_capHeight) / 2, k_elementWidth, k_capHeight), KDColorWhite);
+  ctx->fillRect(KDRect(icon_rect.width() - 2 * k_elementWidth, 0, k_elementWidth, icon_rect.height()).translatedBy(icon_rect.topLeft()), KDColorWhite);
+  ctx->fillRect(KDRect(icon_rect.width() - k_elementWidth, (icon_rect.height() - k_capHeight) / 2, k_elementWidth, k_capHeight).translatedBy(icon_rect.topLeft()), KDColorWhite);
 }
 
 KDSize BatteryView::minimalSizeForOptimalDisplay() const {
-  return KDSize(k_batteryWidth, k_batteryHeight);
+  return KDSize(percentage_rect.width() + icon_rect.width(), percentage_rect.height());
 }

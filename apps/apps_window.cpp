@@ -18,7 +18,13 @@ void AppsWindow::setTitle(I18n::Message title) {
 }
 
 bool AppsWindow::updateBatteryLevel() {
-  return m_titleBarView.setChargeState(Ion::Battery::level());
+  float guessed_battery_level = 0.0f;
+
+  float voltage = Ion::Battery::voltage();
+
+  guessed_battery_level = ((voltage - 3.6f) / (3.8f - 3.6f)) * 100.f;
+
+  return m_titleBarView.setChargeState(Ion::Battery::level()) | m_titleBarView.setChargePercentage(guessed_battery_level);
 }
 
 bool AppsWindow::updateIsChargingState() {
